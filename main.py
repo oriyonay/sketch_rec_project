@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--sr', type=int, default=100, required=False)
 
 # number of seconds to record
-parser.add_argument('--record_length', type=int, default=10, required=False)
+parser.add_argument('--record_length', type=int, default=3, required=False)
 
 # where to save the pickled file?
 parser.add_argument('--out', type=str, default='./tracker_output.p', required=False)
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     n_samples = args.record_length * args.sr
 
     # create the x, y lists for mouse and eye tracking data:
-    data = {'mouse_data' : [], 'eye_data' : [], 'time' : []}
+    data = {'mouse_data' : [], 'eye_data_right' : [], 'eye_data_left' : [], 'time' : []}
 
     print('beginning recording!')
 
@@ -81,12 +81,13 @@ if __name__ == '__main__':
     for _ in range(n_samples):
 
         # Collecting Eye coordinates and mouse coordinates
-        p,e,t = tracker.capture()
+        p,e_r,e_l,t = tracker.capture()
 
 
         # append this data to our data:
         data['mouse_data'].append(p)
-        data['eye_data'].append(e)
+        data['eye_data_right'].append(e_r)
+        data['eye_data_left'].append(e_l)
         data['time'].append(t)
 
         # sleep for interval amount of time (until next sampling):

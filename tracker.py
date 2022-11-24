@@ -31,14 +31,15 @@ class Tracker():
         ret, frame = self.fresh.read(seqnumber=cnt+1)
         # get mouse position:
         p = self.mouse.position
+        p = [p[0],p[1]]
         t =time.time()
-        e = (None,None)
+        e = None
         bounding_box = self.model.detect(frame,landmarks=True)
         if bounding_box[2] is not None:
-            right_eye_coors = (bounding_box[2][0][0][0], bounding_box[2][0][0][1])
-            left_eye_coors = (bounding_box[2][0][1][0], bounding_box[2][0][1][1])
-            e = (right_eye_coors, left_eye_coors)
-        return p, e, t
+            right_eye_coors = [bounding_box[2][0][0][0], bounding_box[2][0][0][1]]
+            left_eye_coors = [bounding_box[2][0][1][0], bounding_box[2][0][1][1]]
+
+        return p, right_eye_coors, left_eye_coors, t
 
 
         # print(bounding_box[2][0])
