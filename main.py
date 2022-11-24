@@ -13,7 +13,7 @@ import time
 import numpy as np
 from pynput.mouse import Controller
 #Import functions that we made
-from tracker_functions import *
+from tracker import *
 
 # ------------------------- PARSE CLI ARGUMENTS ------------------------- #
 # create the argument parser
