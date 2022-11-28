@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--sr', type=int, default=100, required=False)
 
 # number of seconds to record
-parser.add_argument('--record_length', type=int, default=3, required=False)
+parser.add_argument('--record_length', type=int, default=2, required=False)
 
 # where to save the pickled file?
 parser.add_argument('--out', type=str, default='./tracker_output.p', required=False)
@@ -81,8 +81,10 @@ if __name__ == '__main__':
     for _ in range(n_samples):
 
         # Collecting Eye coordinates and mouse coordinates
-        p,e_r,e_l,t = tracker.capture()
+        p,e,t = tracker.capture()
 
+        e_r = e[0]
+        e_l = e[1]
 
         # append this data to our data:
         data['mouse_data'].append(p)

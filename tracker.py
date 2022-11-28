@@ -29,31 +29,80 @@ class Tracker():
         cnt = 0
         # The fresh frame helps stop race conditions and assures we are collecting the frames and mouse coords that correspond to each other
         ret, frame = self.fresh.read(seqnumber=cnt+1)
+
         # get mouse position:
         p = self.mouse.position
         p = [p[0],p[1]]
         t =time.time()
-        e = None
-        bounding_box = self.model.detect(frame,landmarks=True)
-        if bounding_box[2] is not None:
-            right_eye_coors = [bounding_box[2][0][0][0], bounding_box[2][0][0][1]]
-            left_eye_coors = [bounding_box[2][0][1][0], bounding_box[2][0][1][1]]
+        e = self.eye_coords(frame)
 
-        return p, right_eye_coors, left_eye_coors, t
+        return p, e, t
 
-
-        # print(bounding_box[2][0])
-        # right_eye_coors = [int(bounding_box[2][0][0][0]),int(bounding_box[2][0][0][1])]
-        # left_eye_coors = [int(bounding_box[2][0][1][0]),int(bounding_box[2][0][1][1])]
-        # #testing to see if i got the right coordinates
-        # cv2.circle(frame, tuple(right_eye_coors), 20,(255,0,0))
-        # cv2.circle(frame, tuple(left_eye_coors), 20,(255,0,0))
-        # cv2.imwrite("test.jpg",frame)
 
     def stop_camera(self):
         self.fresh.release()
         self.v_cap.release()
 
+    def eye_coords(self,frame):
+        bounding_box = self.model.detect(frame, landmarks=True)
+        if bounding_box[2] is not None:
+            right_eye_x = bounding_box[2][0][0][0]
+            right_eye_y = bounding_box[2][0][0][1]
+            left_eye_x = bounding_box[2][0][1][0]
+            left_eye_y = bounding_box[2][0][1][1]
+
+            self.pupil_coords(frame,bounding_box[2])
+            right_eye_coors = [right_eye_x, right_eye_y]
+            left_eye_coors = [left_eye_x, left_eye_y]
+            return right_eye_coors,left_eye_coors
+        return [None,None]
+
+    def image_processing(self,img,threshold = .2):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, img = cv2.threshold(img, threshold*255, 255, cv2.THRESH_BINARY)
+        # gray_frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # _, img = cv2.threshold(gray_frame, 42, 255, cv2.THRESH_BINARY)
+        # img = cv2.erode(img, None, iterations=2)  # 1
+        # img = cv2.dilate(img, None, iterations=4)  # 2
+        # img = cv2.medianBlur(img, 5)  # 3
+        img = cv2.bitwise_not(img)
+        return img
+
+    def centroid(self, img):
+        Moments = cv2.moments(img)
+        x = int(Moments["m10"] / Moments["m00"])
+        y = int(Moments["m01"] / Moments["m00"])
+        return [x,y]
+
+    def pupil_coords(self,frame,bounding_box,offset=12):
+        right_eye_x = bounding_box[0][0][0]
+        right_eye_y = bounding_box[0][0][1]
+        left_eye_x = bounding_box[0][1][0]
+        left_eye_y = bounding_box[0][1][1]
+        offset = 12
+        cropped_r = frame[(int(right_eye_y) - offset):(int(right_eye_y) + offset),
+                  (int(right_eye_x) - offset): (int(right_eye_x) + offset)]
+        processed_r = self.image_processing(cropped_r)
+        centroid_r = self.centroid(processed_r)
+
+        cropped_l = frame[(int(left_eye_y) - offset):(int(left_eye_y) + offset),
+                    (int(left_eye_x) - offset): (int(left_eye_x) + offset)]
+        processed_l = self.image_processing(cropped_l)
+        centroid_l = self.centroid(processed_l)
+
+        return [centroid_r,centroid_l]
+
+        # processed = processed_l
+        # cropped = cropped_l
+        #
+        #
+        # backtorgb = cv2.cvtColor(processed, cv2.COLOR_GRAY2RGB)
+        # cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
+        #
+        # cv2.imshow("just eye", cropped)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        # cv2.waitKey(1)
 
 class FreshestFrame(threading.Thread):
     def __init__(self, capture, name="FreshestFrame"):
