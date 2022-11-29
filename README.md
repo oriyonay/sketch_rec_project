@@ -6,12 +6,12 @@ Repository for our sketch recognition (Texas A&M's CSCE 624) class project, whic
 ## reader.py
 This file is used to read the stored data
 
-## tracker.py
+## Main.py
 This file is used to start the data collection
 
-## tracker_functions.py
-This file contains the helper functions and classes to collect mouse and eyetackign coordinates
+## Tracker.py
+coordinates
 ### class FreshestFrame
 This Class is a wrapper class for cv2 video capture that assures there is no race condition between recorded frames so that it is all in order and synced with mouse movements
 ### class Tracker
-This class contains the functions for capturing mouse and eye coordinates.
+This class contains the functions for capturing mouse, eye, and pupil coordinates.
