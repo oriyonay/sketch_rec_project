@@ -34,7 +34,7 @@ class Tracker():
         p = self.mouse.position
         p = [p[0],p[1]]
         t =time.time()
-        e = self.eye_coords(frame)
+        e = self.pupil_coords(frame)
 
         return p, e, t
 
@@ -47,16 +47,8 @@ class Tracker():
     def eye_coords(self,frame):
         bounding_box = self.model.detect(frame, landmarks=True)
         if bounding_box[2] is not None:
-            right_eye_x = bounding_box[2][0][0][0]
-            right_eye_y = bounding_box[2][0][0][1]
-            left_eye_x = bounding_box[2][0][1][0]
-            left_eye_y = bounding_box[2][0][1][1]
-
-            self.pupil_coords(frame,bounding_box[2])
-            right_eye_coors = [right_eye_x, right_eye_y]
-            left_eye_coors = [left_eye_x, left_eye_y]
-            return right_eye_coors,left_eye_coors
-        return self.pupil_coords(frame,bounding_box[2])
+            return bounding_box[2]
+        return None
 
     def image_processing(self,img,threshold = .2):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -71,42 +63,44 @@ class Tracker():
 
     def centroid(self, img):
         Moments = cv2.moments(img)
-        if  Moments["m00"] != 0:
+        if  Moments["m00"] != 0 and Moments["m00"] != None:
             x = int(Moments["m10"] / Moments["m00"])
             y = int(Moments["m01"] / Moments["m00"])
             return [x,y]
         return [None,None]
 
-    def pupil_coords(self,frame,bounding_box,offset=12):
-        right_eye_x = bounding_box[0][0][0]
-        right_eye_y = bounding_box[0][0][1]
-        left_eye_x = bounding_box[0][1][0]
-        left_eye_y = bounding_box[0][1][1]
-        offset = 12
-        cropped_r = frame[(int(right_eye_y) - offset):(int(right_eye_y) + offset),
-                  (int(right_eye_x) - offset): (int(right_eye_x) + offset)]
-        processed_r = self.image_processing(cropped_r)
-        centroid_r = self.centroid(processed_r)
+    def pupil_coords(self,frame,offset=12):
+        bounding_box = self.eye_coords(frame)
+        if bounding_box is not None:
+            right_eye_x = bounding_box[0][0][0]
+            right_eye_y = bounding_box[0][0][1]
+            left_eye_x = bounding_box[0][1][0]
+            left_eye_y = bounding_box[0][1][1]
+            offset = 12
+            cropped_r = frame[(int(right_eye_y) - offset):(int(right_eye_y) + offset),
+                      (int(right_eye_x) - offset): (int(right_eye_x) + offset)]
+            processed_r = self.image_processing(cropped_r)
+            centroid_r = self.centroid(processed_r)
 
-        cropped_l = frame[(int(left_eye_y) - offset):(int(left_eye_y) + offset),
-                    (int(left_eye_x) - offset): (int(left_eye_x) + offset)]
-        processed_l = self.image_processing(cropped_l)
-        centroid_l = self.centroid(processed_l)
+            cropped_l = frame[(int(left_eye_y) - offset):(int(left_eye_y) + offset),
+                        (int(left_eye_x) - offset): (int(left_eye_x) + offset)]
+            processed_l = self.image_processing(cropped_l)
+            centroid_l = self.centroid(processed_l)
 
-        # return [centroid_r,centroid_l]
+            # return [centroid_r,centroid_l]
 
-        processed = processed_l
-        cropped = cropped_l
+            processed = processed_l
+            cropped = cropped_l
 
-        cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
-        self.output_video.write(cropped)
-        # cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
-        # cv2.imshow("just eye", cropped)
-        # cv2.imwrite("centroid.png",cropped)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-        # cv2.waitKey(1)
-        return [centroid_r, centroid_l]
+            cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
+            self.output_video.write(cropped)
+            # cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
+            # cv2.imshow("just eye", cropped)
+            # cv2.imwrite("centroid.png",cropped)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+            # cv2.waitKey(1)
+            return [centroid_r, centroid_l]
 
 class FreshestFrame(threading.Thread):
     def __init__(self, capture, name="FreshestFrame"):
