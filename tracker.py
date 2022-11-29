@@ -20,7 +20,7 @@ class Tracker():
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         v_res = (int(self.v_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.v_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         v_fps = self.v_cap.get(cv2.CAP_PROP_FPS)
-        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, v_res)
+        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, (24,24))
 
         # Setting up mouse tracking
         self.mouse = Controller()
@@ -42,6 +42,7 @@ class Tracker():
     def stop_camera(self):
         self.fresh.release()
         self.v_cap.release()
+        self.output_video.release()
 
     def eye_coords(self,frame):
         bounding_box = self.model.detect(frame, landmarks=True)
@@ -55,7 +56,7 @@ class Tracker():
             right_eye_coors = [right_eye_x, right_eye_y]
             left_eye_coors = [left_eye_x, left_eye_y]
             return right_eye_coors,left_eye_coors
-        return [None,None]
+        return self.pupil_coords(frame,bounding_box[2])
 
     def image_processing(self,img,threshold = .2):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -70,9 +71,11 @@ class Tracker():
 
     def centroid(self, img):
         Moments = cv2.moments(img)
-        x = int(Moments["m10"] / Moments["m00"])
-        y = int(Moments["m01"] / Moments["m00"])
-        return [x,y]
+        if  Moments["m00"] != 0:
+            x = int(Moments["m10"] / Moments["m00"])
+            y = int(Moments["m01"] / Moments["m00"])
+            return [x,y]
+        return [None,None]
 
     def pupil_coords(self,frame,bounding_box,offset=12):
         right_eye_x = bounding_box[0][0][0]
@@ -90,19 +93,20 @@ class Tracker():
         processed_l = self.image_processing(cropped_l)
         centroid_l = self.centroid(processed_l)
 
-        return [centroid_r,centroid_l]
+        # return [centroid_r,centroid_l]
 
-        # processed = processed_l
-        # cropped = cropped_l
-        #
-        #
-        # backtorgb = cv2.cvtColor(processed, cv2.COLOR_GRAY2RGB)
+        processed = processed_l
+        cropped = cropped_l
+
+        cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
+        self.output_video.write(cropped)
         # cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
-        #
         # cv2.imshow("just eye", cropped)
+        # cv2.imwrite("centroid.png",cropped)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
         # cv2.waitKey(1)
+        return [centroid_r, centroid_l]
 
 class FreshestFrame(threading.Thread):
     def __init__(self, capture, name="FreshestFrame"):
