@@ -10,7 +10,7 @@ This file is used to read the stored data
 This file is used to start the data collection
 
 ## Tracker.py
-coordinates
+This file contains the classes and functions to capture mouse and eye movement
 ### class FreshestFrame
 This Class is a wrapper class for cv2 video capture that assures there is no race condition between recorded frames so that it is all in order and synced with mouse movements
 ### class Tracker
