@@ -10,17 +10,20 @@ from PIL import Image, ImageDraw, ImageStat
 from pynput.mouse import Controller
 
 class Tracker():
-    def __init__(self,input_path = 0,output_path = "./output.mp4"):
+    def __init__(self,input_path = 0,output_path = "./output.mp4",offsets = [25,20]):
 
         # Setting up vision model for eye-tracking
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = MTCNN(keep_all=True, device=device)
         self.v_cap = cv2.VideoCapture(input_path)
+        self.v_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.v_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.fresh = FreshestFrame(self.v_cap)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self.offsets = offsets
         v_res = (int(self.v_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.v_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         v_fps = self.v_cap.get(cv2.CAP_PROP_FPS)
-        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, (24,24))
+        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, (self.offsets[1] * 2, self.offsets[0] * 2))
 
         # Setting up mouse tracking
         self.mouse = Controller()
@@ -70,20 +73,20 @@ class Tracker():
         return [None,None]
 
     def pupil_coords(self,frame,offset=12):
+
         bounding_box = self.eye_coords(frame)
         if bounding_box is not None:
             right_eye_x = bounding_box[0][0][0]
             right_eye_y = bounding_box[0][0][1]
             left_eye_x = bounding_box[0][1][0]
             left_eye_y = bounding_box[0][1][1]
-            offset = 12
-            cropped_r = frame[(int(right_eye_y) - offset):(int(right_eye_y) + offset),
-                      (int(right_eye_x) - offset): (int(right_eye_x) + offset)]
+            cropped_r = frame[(int(right_eye_y) - self.offsets[1]):(int(right_eye_y) + self.offsets[1]),
+                      (int(right_eye_x) - self.offsets[0]): (int(right_eye_x) + self.offsets[0])]
             processed_r = self.image_processing(cropped_r)
             centroid_r = self.centroid(processed_r)
 
-            cropped_l = frame[(int(left_eye_y) - offset):(int(left_eye_y) + offset),
-                        (int(left_eye_x) - offset): (int(left_eye_x) + offset)]
+            cropped_l = frame[(int(left_eye_y) - self.offsets[1]):(int(left_eye_y) + self.offsets[1]),
+                        (int(left_eye_x) - self.offsets[0]): (int(left_eye_x) + self.offsets[0])]
             processed_l = self.image_processing(cropped_l)
             centroid_l = self.centroid(processed_l)
 
@@ -94,8 +97,10 @@ class Tracker():
 
             cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
             self.output_video.write(cropped)
+            # print(cropped.shape)
             # cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
             # cv2.imshow("just eye", cropped)
+            # # print(cropped.shape)
             # cv2.imwrite("centroid.png",cropped)
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
