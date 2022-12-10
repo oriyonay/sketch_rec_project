@@ -16,11 +16,13 @@ class Tracker():
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = MTCNN(keep_all=True, device=device)
         self.v_cap = cv2.VideoCapture(input_path)
+        self.v_cap .set(3, 1920)
+        self.v_cap .set(4, 1080)
         self.fresh = FreshestFrame(self.v_cap)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         v_res = (int(self.v_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.v_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         v_fps = self.v_cap.get(cv2.CAP_PROP_FPS)
-        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, (24,24))
+        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, (30,30))
 
         # Setting up mouse tracking
         self.mouse = Controller()
@@ -69,14 +71,13 @@ class Tracker():
             return [x,y]
         return [None,None]
 
-    def pupil_coords(self,frame,offset=12):
+    def pupil_coords(self,frame,offset=15):
         bounding_box = self.eye_coords(frame)
         if bounding_box is not None:
             right_eye_x = bounding_box[0][0][0]
             right_eye_y = bounding_box[0][0][1]
             left_eye_x = bounding_box[0][1][0]
             left_eye_y = bounding_box[0][1][1]
-            offset = 12
             cropped_r = frame[(int(right_eye_y) - offset):(int(right_eye_y) + offset),
                       (int(right_eye_x) - offset): (int(right_eye_x) + offset)]
             processed_r = self.image_processing(cropped_r)
