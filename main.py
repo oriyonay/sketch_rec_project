@@ -14,20 +14,20 @@ import numpy as np
 from pynput.mouse import Controller
 #Import functions that we made
 from tracker import *
-
+from tqdm import tqdm
 # ------------------------- PARSE CLI ARGUMENTS ------------------------- #
 # create the argument parser
 parser = argparse.ArgumentParser()
 
 # add arguments:
 # sample rate (number of samples to be recorded per second)
-parser.add_argument('--sr', type=int, default=100, required=False)
+parser.add_argument('--sr', type=int, default=1000, required=False)
 
 # number of seconds to record
 parser.add_argument('--record_length', type=int, default=2, required=False)
 
 # where to save the pickled file?
-parser.add_argument('--out', type=str, default='./tracker_output.p', required=False)
+parser.add_argument('--out', type=str, default='./osu_1_person_2_output.p', required=False)
 
 # which derivatives of data to compute / save? (will compute UP TO this derivative,
 # i.e., a value of 2 means we compute first and second derivative; 0 means no
@@ -64,7 +64,7 @@ def derivative_xy(coords, degree=1):
 # ------------------------- RECORD DATA ------------------------- #
 if __name__ == '__main__':
     print('initializing...')
-    tracker = Tracker()
+    tracker = Tracker(0)
     print('intialized!')
 
     # calculate the sampling interval (1 / sr) and total
@@ -78,13 +78,18 @@ if __name__ == '__main__':
     print('beginning recording!')
 
     # record the mouse & eye positions n_samples times:
-    for _ in range(n_samples):
+    for _ in tqdm(range(n_samples)):
 
         # Collecting Eye coordinates and mouse coordinates
         p,e,t = tracker.capture()
 
-        e_r = e[0]
-        e_l = e[1]
+        e_r = None
+        e_l = None
+
+        if e is not None:
+
+            e_r = e[0]
+            e_l = e[1]
 
         # append this data to our data:
         data['mouse_data'].append(p)
@@ -93,7 +98,7 @@ if __name__ == '__main__':
         data['time'].append(t)
 
         # sleep for interval amount of time (until next sampling):
-        time.sleep(interval)
+        # time.sleep(interval)
 
     tracker.stop_camera()
     print('recording stopped.')
