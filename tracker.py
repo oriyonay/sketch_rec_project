@@ -8,6 +8,8 @@ import cv2
 import time
 from PIL import Image, ImageDraw, ImageStat
 from pynput.mouse import Controller
+import mediapipe as mp
+
 
 class Tracker():
     def __init__(self,input_path = 0,output_path = "./output.mp4"):
