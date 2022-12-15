@@ -21,13 +21,13 @@ parser = argparse.ArgumentParser()
 
 # add arguments:
 # sample rate (number of samples to be recorded per second)
-parser.add_argument('--sr', type=int, default=1000, required=False)
+parser.add_argument('--sr', type=int, default=500, required=False)
 
 # number of seconds to record
 parser.add_argument('--record_length', type=int, default=2, required=False)
 
 # where to save the pickled file?
-parser.add_argument('--out', type=str, default='./osu_1_person_2_output.p', required=False)
+parser.add_argument('--out', type=str, default='./general_use.p', required=False)
 
 # which derivatives of data to compute / save? (will compute UP TO this derivative,
 # i.e., a value of 2 means we compute first and second derivative; 0 means no
@@ -64,7 +64,7 @@ def derivative_xy(coords, degree=1):
 # ------------------------- RECORD DATA ------------------------- #
 if __name__ == '__main__':
     print('initializing...')
-    tracker = Tracker(0)
+    tracker = Tracker(1)
     print('intialized!')
 
     # calculate the sampling interval (1 / sr) and total

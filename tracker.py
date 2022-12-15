@@ -2,26 +2,35 @@ import cv2
 import time
 import threading
 import numpy as np
-from facenet_pytorch import MTCNN
 import torch
 import cv2
 import time
 from PIL import Image, ImageDraw, ImageStat
 from pynput.mouse import Controller
+import mediapipe as mp
+
+
 
 class Tracker():
     def __init__(self,input_path = 0,output_path = "./output.mp4"):
 
         # Setting up vision model for eye-tracking
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = MTCNN(keep_all=True, device=device)
-        self.v_cap = cv2.VideoCapture(input_path)
+        #setting up mediapipe
+        self.mp_face_mesh = mp.solutions.face_mesh
+
+        # setting up recording
+        self.v_cap = cv2.VideoCapture(input_path, cv2.CAP_DSHOW)
+
+        # self.v_cap.set(3, 1280)
+        # self.v_cap.set(4, 720)
+
         self.fresh = FreshestFrame(self.v_cap)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         v_res = (int(self.v_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.v_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         v_fps = self.v_cap.get(cv2.CAP_PROP_FPS)
-        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, (24,24))
-
+        print("resolution:",v_res)
+        self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, v_res)
         # Setting up mouse tracking
         self.mouse = Controller()
 
@@ -44,63 +53,42 @@ class Tracker():
         self.v_cap.release()
         self.output_video.release()
 
-    def eye_coords(self,frame):
-        bounding_box = self.model.detect(frame, landmarks=True)
-        if bounding_box[2] is not None:
-            return bounding_box[2]
-        return None
+    def getLandmarks(self,image):
+        face_mesh = self.mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.7,
+                                          refine_landmarks=True, max_num_faces=1)
+        # To improve performance, optionally mark the image as not writeable to
+        # pass by reference.
+        image.flags.writeable = False
+        results = face_mesh.process(image)
+        # print(results.multi_face_landmarks[0])
+        if results.multi_face_landmarks is not None:
+            landmarks = results.multi_face_landmarks[0].landmark
+            return landmarks, results
+        return None, None
 
-    def image_processing(self,img,threshold = .2):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, img = cv2.threshold(img, threshold*255, 255, cv2.THRESH_BINARY)
-        # gray_frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # _, img = cv2.threshold(gray_frame, 42, 255, cv2.THRESH_BINARY)
-        # img = cv2.erode(img, None, iterations=2)  # 1
-        # img = cv2.dilate(img, None, iterations=4)  # 2
-        # img = cv2.medianBlur(img, 5)  # 3
-        img = cv2.bitwise_not(img)
-        return img
+    def pupil_coords(self,frame):
 
-    def centroid(self, img):
-        Moments = cv2.moments(img)
-        if  Moments["m00"] != 0 and Moments["m00"] != None:
-            x = int(Moments["m10"] / Moments["m00"])
-            y = int(Moments["m01"] / Moments["m00"])
-            return [x,y]
+        landmarks,results = self.getLandmarks(frame)
+        if landmarks is not None:
+            #get just right and left center pupil coordinates
+            iris_landmarks = [landmarks[473], landmarks[468]]
+            coords = []
+            for landmark in iris_landmarks:
+                shape = frame.shape
+                x = landmark.x
+                y = landmark.y
+                relative_x = int(x * shape[1])
+                relative_y = int(y * shape[0])
+
+                frame = cv2.circle(frame, (relative_x, relative_y), radius=1, color=(0, 0, 255), thickness=-1)
+
+                self.output_video.write(frame)
+                # cv2.imshow('frame',frame)
+                # if cv2.waitKey(1) & 0xFF == ord('q'):
+                #     break
+                coords.append([relative_x,relative_y])
+            return coords
         return [None,None]
-
-    def pupil_coords(self,frame,offset=12):
-        bounding_box = self.eye_coords(frame)
-        if bounding_box is not None:
-            right_eye_x = bounding_box[0][0][0]
-            right_eye_y = bounding_box[0][0][1]
-            left_eye_x = bounding_box[0][1][0]
-            left_eye_y = bounding_box[0][1][1]
-            offset = 12
-            cropped_r = frame[(int(right_eye_y) - offset):(int(right_eye_y) + offset),
-                      (int(right_eye_x) - offset): (int(right_eye_x) + offset)]
-            processed_r = self.image_processing(cropped_r)
-            centroid_r = self.centroid(processed_r)
-
-            cropped_l = frame[(int(left_eye_y) - offset):(int(left_eye_y) + offset),
-                        (int(left_eye_x) - offset): (int(left_eye_x) + offset)]
-            processed_l = self.image_processing(cropped_l)
-            centroid_l = self.centroid(processed_l)
-
-            # return [centroid_r,centroid_l]
-
-            processed = processed_l
-            cropped = cropped_l
-
-            cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
-            self.output_video.write(cropped)
-            # cropped = cv2.circle(cropped, centroid_l, 2, (0, 0, 255))
-            # cv2.imshow("just eye", cropped)
-            # cv2.imwrite("centroid.png",cropped)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
-            # cv2.waitKey(1)
-            return [centroid_r, centroid_l]
 
 class FreshestFrame(threading.Thread):
     def __init__(self, capture, name="FreshestFrame"):

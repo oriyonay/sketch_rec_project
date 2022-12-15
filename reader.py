@@ -1,7 +1,7 @@
 import pickle
 import matplotlib.pyplot as plt
 
-file_name = "tracker_output.p"
+file_name = "general_use.p"
 with open(file_name, 'rb') as f:
     x = pickle.load(f)
 
