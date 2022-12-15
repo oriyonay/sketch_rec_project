@@ -27,7 +27,7 @@ parser.add_argument('--sr', type=int, default=500, required=False)
 parser.add_argument('--record_length', type=int, default=2, required=False)
 
 # where to save the pickled file?
-parser.add_argument('--out', type=str, default='./fish1.p', required=False)
+parser.add_argument('--out', type=str, default='./general_use.p', required=False)
 
 # which derivatives of data to compute / save? (will compute UP TO this derivative,
 # i.e., a value of 2 means we compute first and second derivative; 0 means no
