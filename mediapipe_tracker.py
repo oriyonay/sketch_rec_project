@@ -12,7 +12,7 @@ mp_face_mesh = mp.solutions.face_mesh
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
 def getLandmarks(image):
-    face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5,refine_landmarks=True)
+    face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.7,refine_landmarks=True,max_num_faces=1)
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False
@@ -21,8 +21,7 @@ def getLandmarks(image):
     if results.multi_face_landmarks is not None:
         landmarks = results.multi_face_landmarks[0].landmark
         return landmarks, results
-    else:
-        return None,None
+    return None, None
 while True:
     # Read camera frames
     success, frame = cap.read()
@@ -34,13 +33,21 @@ while True:
     frame = cv2.flip(frame, 1)
 
     landmarks, results = getLandmarks(frame)
+    if landmarks is None :
+        continue
     print("len landmarks",len(landmarks))
-    iris_landmarks  = landmarks[-10:]
+    # iris_landmarks  = [landmarks[473],landmarks[474],landmarks[475],landmarks[476],landmarks[477]]
+    #iris_landmarks  = [landmarks[473]]
+
+    #leftEyeIris: [468, 469, 470, 471, 472]
+
+    # iris_landmarks = [landmarks[468], landmarks[469], landmarks[470], landmarks[471], landmarks[472]]
+    iris_landmarks = [landmarks[473],landmarks[468]]
     # print("length:",len(getLandmarks(frame)))
     # print(getLandmarks(frame))
     # show webcame frames
 
-
+    print(iris_landmarks)
     for landmark in iris_landmarks:
         shape = frame.shape
         x = landmark.x

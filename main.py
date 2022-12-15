@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser()
 
 # add arguments:
 # sample rate (number of samples to be recorded per second)
-parser.add_argument('--sr', type=int, default=1000, required=False)
+parser.add_argument('--sr', type=int, default=250, required=False)
 
 # number of seconds to record
 parser.add_argument('--record_length', type=int, default=2, required=False)
