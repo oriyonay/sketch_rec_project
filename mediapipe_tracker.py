@@ -1,10 +1,12 @@
 import cv2
 import mediapipe as mp
 
-cap = cv2.VideoCapture(0)
+print("camera not started")
+cap = cv2.VideoCapture(1)
+print("camera started")
 # set the setting of the webcam
-cap.set(3, 640)    # width
-cap.set(4, 420)    # height
+cap.set(3, 1920)    # width
+cap.set(4, 1080)    # height
 cap.set(10, 100)   # brightness
 
 mp_drawing = mp.solutions.drawing_utils
@@ -12,7 +14,7 @@ mp_face_mesh = mp.solutions.face_mesh
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
 def getLandmarks(image):
-    face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.7,refine_landmarks=True,max_num_faces=1)
+    face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5,refine_landmarks=True,max_num_faces=1)
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False

@@ -20,11 +20,16 @@ class Tracker():
         self.mp_face_mesh = mp.solutions.face_mesh
 
         # setting up recording
-        self.v_cap = cv2.VideoCapture(input_path)
+        self.v_cap = cv2.VideoCapture(input_path, cv2.CAP_DSHOW)
+
+        # self.v_cap.set(3, 1280)
+        # self.v_cap.set(4, 720)
+
         self.fresh = FreshestFrame(self.v_cap)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         v_res = (int(self.v_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.v_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         v_fps = self.v_cap.get(cv2.CAP_PROP_FPS)
+        print("resolution:",v_res)
         self.output_video = cv2.VideoWriter(output_path, fourcc, v_fps, v_res)
         # Setting up mouse tracking
         self.mouse = Controller()
@@ -76,7 +81,11 @@ class Tracker():
                 relative_y = int(y * shape[0])
 
                 frame = cv2.circle(frame, (relative_x, relative_y), radius=1, color=(0, 0, 255), thickness=-1)
+
                 self.output_video.write(frame)
+                # cv2.imshow('frame',frame)
+                # if cv2.waitKey(1) & 0xFF == ord('q'):
+                #     break
                 coords.append([relative_x,relative_y])
             return coords
         return [None,None]
