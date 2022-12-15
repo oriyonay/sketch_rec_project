@@ -18,9 +18,11 @@ def getLandmarks(image):
     image.flags.writeable = False
     results = face_mesh.process(image)
     # print(results.multi_face_landmarks[0])
-    landmarks = results.multi_face_landmarks[0].landmark
-    return landmarks, results
-
+    if results.multi_face_landmarks is not None:
+        landmarks = results.multi_face_landmarks[0].landmark
+        return landmarks, results
+    else:
+        return None,None
 while True:
     # Read camera frames
     success, frame = cap.read()
