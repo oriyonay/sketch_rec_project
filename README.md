@@ -5,7 +5,7 @@ Repository for our sketch recognition (Texas A&M's CSCE 624) class project, whic
 
 ## reader.py
 This file is used to read the stored data
-
+(use this as an example on how to access data)
 ## Main.py
 This file is used to start the data collection
 
