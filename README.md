@@ -7,10 +7,10 @@ to run use the following command:
 python main.py --sr [sample rate] --record_length [seconds of recording] --out [file path for pickle output] --derivatives [integer for nth derivative]
 
 ## Important folders
-### Data
+### data
 This folder contains all of the data collected in the form of pickle and csv files. It also contains the jupyter notebook used for inference.
 
-###visualizations
+### visualizations
 Contains visualizations of the data that we used in our presentations and paper
 
 
