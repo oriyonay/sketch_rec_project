@@ -8,7 +8,7 @@ python main.py --sr [sample rate] --record_length [seconds of recording] --out [
 
 ## Important folders
 ### data
-This folder contains all of the data collected in the form of pickle and csv files. It also contains the jupyter notebook used for inference.
+This folder contains all of the data collected in the form of pickle and csv files. It also contains the jupyter notebook used for inference (analysis.ipynb).
 
 ### visualizations
 Contains visualizations of the data that we used in our presentations and paper
